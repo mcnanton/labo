@@ -24,7 +24,7 @@ require("DiceKriging")
 require("mlrMBO")
 
 # Poner la carpeta de la materia de SU computadora local
-setwd("/home/aleb/dmeyf2022")
+setwd("C:/Users/mcnan/Documents/DMEyF")
 # Poner sus semillas
 semillas <- c(17, 19, 23, 29, 31)
 
@@ -172,8 +172,9 @@ table(dataset[ds_sample]$clase_binaria)
 ## - ¿Hay mejores formas de muestrear?
 ## - ¿Es bueno muestrear?
 ## - ¿Qué efectos en las métricas va a producir el muestreo?
-## - ¿Por qué se eligió usar el AUC?
-## - ¿Qué hay que cambiar en la función de ganancia para poder utilizarla?
+## - ¿Por qué se eligió usar el AUC? Se usa con modelos rebalanceados, no se ve afectada por el desbalanceo de los datos
+## - ¿Qué hay que cambiar en la función de ganancia para poder utilizarla? 
+#Porque se ve afectada por el desbalanceo. Los baja+1 en realidad pesan mas que los baja+2 pq estan subrepresentados
 
 ## ---------------------------
 ## Step 6: Comparando tiempos con o sin muestras
@@ -197,7 +198,7 @@ print(t1 - t0)
 print(r2)
 
 ## Preguntas
-## - ¿Por qué sólo se muestrea train?
+## - ¿Por qué sólo se muestrea train? pq no es costoso escoriar sobre test
 
 ## ---------------------------
 ## Step 7: Buscando el mejor modelo con muestras aleatorias LHS
@@ -261,6 +262,9 @@ ggplot(resultados_random_search, aes(x = md, y = ms, color = auc)) +
 ## ---------------------------
 ## Step 8: Trabajando con herramientas más profesionales
 ## ---------------------------
+#Procesos gaussianos
+#Construyen una funcion
+#Toman puntos reales y van descubriendo nuevos
 
 # Veamos un ejemplo
 set.seed(semillas[1])
@@ -280,6 +284,10 @@ design <- generateDesign(6L, getParamSet(obj_fun), fun = lhs::maximinLHS)
 
 run <- exampleRun(obj_fun, design = design, learner = lrn,
                  control = ctrl, points.per.dim = 100, show.info = TRUE)
+#y seria la ganancia?
+#El minimo lo buscaria en el espacio en el que puede llegar a estar el punto en mi proceso gausiano
+#Los piquitos de abajo corresponden a los puntos rojos del grafico de arriba (partes grises mas bajas), nos indican donde explotar
+
 
 # Ejecutar de a uno
 plotExampleRun(run, iters = 1, densregion = TRUE, pause = FALSE)
@@ -295,6 +303,7 @@ plotExampleRun(run, iters = 10, densregion = TRUE, pause = FALSE)
 ## ---------------------------
 ## Step 9: Introduciendo la técnica en nuestro conjunto
 ## ---------------------------
+#Existe una función que tenga sentido para optimizar?
 
 resultados_maxdepth <- data.table()
 
@@ -309,15 +318,15 @@ for (v in 4:20) {
 ggplot(resultados_maxdepth, aes(md, auc)) + geom_point()
 
 ## ---------------------------
-## Step 9: Buscando con una Opt. Bayesiana para 1 parámetro
+## Step 10: Buscando con una Opt. Bayesiana para 1 parámetro
 ## ---------------------------
 
 set.seed(semillas[1])
 obj_fun_md <- function(x) {
-  experimento_rpart(dataset, semillas, md = x$maxdepth)
+  experimento_rpart(dataset, semillas, md = x$maxdepth) #se pasan parametros como listas
 }
 
-obj_fun <- makeSingleObjectiveFunction(
+obj_fun <- makeSingleObjectiveFunction( #porque se pueden hacer funciones con mas de 1 metrica objetivo
   minimize = FALSE,
   fn = obj_fun_md,
   par.set = makeParamSet(
@@ -336,6 +345,8 @@ ctrl <- setMBOControlInfill(
   opt.focussearch.points = 2
 )
 
+#Por diseño busca 4 parametros?
+
 lrn <- makeMBOLearner(ctrl, obj_fun)
 
 surr_km <- makeLearner("regr.km", predict.type = "se", covtype = "matern3_2")
@@ -345,7 +356,7 @@ print(run_md)
 
 
 ## ---------------------------
-## Step 10: Buscando con una Opt. Bayesiana para 2 parámetros
+## Step 11: Buscando con una Opt. Bayesiana para 2 parámetros
 ## ---------------------------
 
 set.seed(semillas[1])
@@ -384,7 +395,65 @@ surr_km <- makeLearner("regr.km", predict.type = "se", covtype = "matern3_2")
 run_md_ms <- mbo(obj_fun, learner = surr_km, control = ctrl, )
 print(run_md_ms)
 
+##### Si el mejor rdo lo encuentra en el tope del espacio de búsqueda, hay que agrandarlo!
+
+## ---------------------------
+## Step 12: Buscando con una Opt. Bayesiana para 3 parámetros
+## ---------------------------
+# cp = 0, ms = 20, mb = 1)
+
+
+set.seed(semillas[1])
+obj_fun_md_ms <- function(x) {
+  experimento_rpart(dataset, semillas
+                    , md = x$maxdepth
+                    , ms = x$minsplit
+                    , mb = floor(x$minbucket*x$minsplit) #Multiplico ms x valores entre 0 y 1
+  )
+}
+
+obj_fun <- makeSingleObjectiveFunction(
+  minimize = FALSE,
+  fn = obj_fun_md_ms,
+  par.set = makeParamSet(
+    makeIntegerParam("maxdepth",  lower = 4L, upper = 20L),
+    makeIntegerParam("minsplit",  lower = 1L, upper = 200L),
+    makeNumericParam("minbucket",  lower = 0, upper = 1) #debe ser menor al min split. 
+    #Podemos pasar nro entre 0 y que multiplique el minsplit
+    #Al setear lower como 0 y upper como 1 va a buscar valores entre 0 y 1
+    # makeNumericParam  para parámetros continuos
+  ),
+  # noisy = TRUE,
+  has.simple.signature = FALSE
+)
+
+ctrl <- makeMBOControl()
+ctrl <- setMBOControlTermination(ctrl, iters = 30L)
+ctrl <- setMBOControlInfill(
+  ctrl,
+  crit = makeMBOInfillCritEI(),
+  opt = "focussearch",
+  # sacar parámetro opt.focussearch.points en próximas ejecuciones!!!!!
+  opt.focussearch.points = 20 #Podemos sacarlo
+)
+
+lrn <- makeMBOLearner(ctrl, obj_fun)
+
+surr_km <- makeLearner("regr.km", predict.type = "se", covtype = "matern3_2")
+
+run_md_ms <- mbo(obj_fun, learner = surr_km, control = ctrl, )
+print(run_md_ms)
+
+
 ## TAREA:
 ## Agregue todos los parámetros que considere. Una vez que tenga sus mejores
 ## parámetros, haga una copia del script rpart/z101_PrimerModelo.R, cambie los
 ## parámetros dentro del script, ejecutelo y suba a Kaggle su modelo.
+
+
+#sacar train_sample tomar muestra train
+#hay que entrenar con todos los datos
+#Generar experimento rpart completo
+#sin sample y cp -1
+#Subir a kaggle
+#poner ganacia en vez de auc
