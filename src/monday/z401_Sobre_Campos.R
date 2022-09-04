@@ -19,7 +19,8 @@ require("ggplot2")
 require("dplyr")
 
 # Poner la carpeta de la materia de SU computadora local
-setwd("/home/aleb/dmeyf2022")
+setwd("C:/Users/mcnan/Documents/DMEyF")
+
 # Poner sus semillas
 semillas <- c(17, 19, 23, 29, 31)
 
@@ -69,8 +70,10 @@ modelo <- rpart(clase_binaria ~ .,
 
 calcular_ganancia(modelo, dtest)
 
-print(modelo$variable.importance)
+print(modelo$variable.importance) #En cuantos cortes participo?
 
+#El ID enmascara antiguedad
+#Al sumar mas meses vamos a tener problemas graves si no lo removemos
 
 ## Preguntas
 ## - ¿Cuáles son las variables más importantes para el modelo?
@@ -88,6 +91,11 @@ summary(modelo)
 
 ## Preguntas
 ## - ¿Cómo operó con la variable nula?
+# Usa variables subrogadas,que se comportan igual a una variable (a la que le faltan datos?). Tienen una estructura de corte muy similar a la otra variable.
+#Se usa para que para 1 sample pueda cortarse aun si tiene NA en esa variable de corte
+
+#Como determina la similitud?
+
 ## - ¿Hace falta imputar las variables para que el árbol abra?
 
 ## ---------------------------
@@ -158,9 +166,9 @@ print(modelo3$variable.importance)
 calcular_ganancia(modelo3, dtest)
 
 ## Preguntas
-## - ¿Son muchos los casos nulos?
+## - ¿Son muchos los casos nulos? % bajo
 ## - En mi caso aparenta una mejora, con más casos cree que esa mejora se
-##   mantendría 
+##   mantendría ? No, la mejora depende de la semilla
 ## - ¿Existe otro valor mejor que la media para imputar?
 
 ## ---------------------------
@@ -169,6 +177,11 @@ calcular_ganancia(modelo3, dtest)
 
 ## Actividad para medir bien la influencia de la media en de esa variable, 
 ## escriba una función de experimento que refleje la transformación  
+
+#Hay que:
+#Media para cada semilla, para cada test train
+#meter esa media en modelos 
+#evaluar cual funciona mejor?
 
 experimento <- function() {
     gan <- c()
@@ -179,6 +192,16 @@ experimento <- function() {
         train  <-  dataset[in_training, ]
         test   <-  dataset[-in_training, ]
 
+        mean_Visa_fechaalta <- mean(train$Visa_fechaalta, na.rm = T) #Lo usa para ambos subgrupos. Segun el prof es algo que no tiende a variar.
+        # Imputamos los nulos de nuestra variable con la media
+        train[, Visa_fechaalta_3 := ifelse(is.na(Visa_fechaalta), 
+                                            mean_Visa_fechaalta,
+                                            Visa_fechaalta)] 
+        
+        test[, Visa_fechaalta_3 := ifelse(is.na(Visa_fechaalta), 
+                                           mean_Visa_fechaalta,
+                                           Visa_fechaalta)] 
+        
         r <- rpart(clase_binaria ~ .,
                     data = train,
                     xval = 0,
@@ -192,10 +215,13 @@ experimento <- function() {
     mean(gan)
 }
 
+experimento()
+
+#Tratar de evitar este tipo de transformaciones porque suman un parametro a la exploración, aumenta la complejidad del modelo "gratuitamente"
+
 # Veamos la 
 ## Preguntas
-## - ¿Qué sucede si una transformación que depende del dataset no se aplica de
-##   esta manera?
+## - ¿Qué sucede si una transformación que depende del dataset no se aplica de esta manera?
 ## - A como funciona el rpart ¿Qué decisión toma sobre esta variable?
 
 ## ---------------------------
@@ -206,7 +232,13 @@ experimento <- function() {
 cor(dtrain$Visa_fechaalta_2,dtrain$Visa_fechaalta_3)
 
 # Varios modelos en los que entren dos variables muy correlacionadas se 
-# romperían. Veamos que pasa con los árboles
+# romperían. 
+
+# Matrices mal condicionadas generan cosas feas (Ver: Álgebra lineal)
+# Árbol: no altera los resultados pero da doble peso a 1 comportamiento. La variable que este mejor se come a los efectos de la otra.
+
+
+#Veamos que pasa con los árboles
 
 modelo4 <- rpart(clase_binaria ~ . ,
                 data = dtrain,
@@ -215,7 +247,8 @@ modelo4 <- rpart(clase_binaria ~ . ,
                 minsplit = 20,
                 minbucket = 10,
                 maxdepth = 5)
-calcular_ganancia(modelo4, dtest)
+calcular_ganancia(modelo4, dtest) #No se altera x la altamentre correlacionada
+
 
 
 ## Preguntas
@@ -225,14 +258,16 @@ calcular_ganancia(modelo4, dtest)
 ## Step 5: Outliers
 ## ---------------------------
 
+#Afectan mucho a las regresiones logisticas
+
 # Veamos el boxplot de una variable muy importante según nuestro árbol
 ggplot(dtrain, aes(x=ctrx_quarter)) + geom_boxplot()
 
 # Vemos la distribución de los deciles
-quantile(dtrain$ctrx_quarter, probs = c(0,0.5, 0.75, 0.9, 0.95, 0.99, 1))
+quantile(dtrain$ctrx_quarter, probs = c(0,0.5, 0.75, 0.9, 0.95, 0.99, 1)) #Media 104, valor maximo un outlier
 
 ## Preguntas
-## - ¿Qué tan frecuentes considera estas dispersiones en los datasets?
+## - ¿Qué tan frecuentes considera estas dispersiones en los datasets? muyy
 
 ## ---------------------------
 ## Step 6: Outliers - Luchando 
@@ -259,14 +294,23 @@ modelo_cq_2 <- rpart(clase_binaria ~ ctrx_quarter_2,
 print(modelo_cq_1)
 print(modelo_cq_2)
 
+#No importa la distancia entre puntos, importa el orden, por eso en este caso puntual no hay diferencia
+
 ## Preguntas
 ## - Mirando los puntos de corte de los dos modelos ¿Existe una relación
-##   matermática entre ellos?
-## - ¿Es útil una transformación monótona en los árboles de decisión?
+##   matermática entre ellos? log(9.+1) = 2.35
+## - ¿Es útil una transformación monótona en los árboles de decisión? NO
 
 ## ---------------------------
 ## Step 7: Outliers - Una más y no jodemos más 
 ## ---------------------------
+
+#Rankeo: reemplazar valor por posición, en este caso, binnear con percentilado
+# Eficiencia predictiva
+# Predice mejor
+# Pierde granularidad. Esto ayuda a evitar overfiteo
+# Evita el data drifting, que las variables de precios, como estan relacionadas con variables que se van moviendo, se vayan "corriendo"
+
 
 dtrain[, r_ctrx_quarter := ntile(ctrx_quarter, 10)]
 dtest[, r_ctrx_quarter := ntile(ctrx_quarter, 10)]
@@ -279,7 +323,7 @@ modelo_cq_4 <- rpart(clase_binaria ~ . - ctrx_quarter - ctrx_quarter_2 - Visa_fe
                     minbucket = 10,
                     maxdepth = 5)
 
-calcular_ganancia(modelo_cq_4, dtest)
+calcular_ganancia(modelo_cq_4, dtest) #22873333
 
 ## Actividad: Para mi semilla, esta estrategia es buena, hacer un experimento
 ## donde no quede al azar este resultado.
@@ -296,7 +340,7 @@ mis_variables <- c("ctrx_quarter",
                     "mcaja_ahorro",
                     "mcuenta_corriente")
 
-# A todas las vamos a rankear
+# A todas las vamos a rankear y almacena en una nueva variable
 
 prefix <- "r_"
 for (var in mis_variables) {
@@ -364,13 +408,17 @@ modelo6 <- rpart(formula2,
 
 print(modelo6$variable.importance)
 
+calcular_ganancia(modelo6, dtest) #321793333
+
 # Importante: Que una modelo tenga otras variables importantes no implicar que
 # sea mejor, ni peor. Eso se debe evaluar con los experimentos
 
 ##
 ## TAREA: Multiples experimentos. Un script por cada uno que debe incluir:
 ## - Feature engineering correctamente aplicado
-## - Opt Bayesiana para el dataset que se incluya nuevas variables
+## - Opt Bayesiana para el dataset que se incluya nuevas variables 100 iteraciones
 ## - Scorear en los datos de marzo y subir a kaggle el score.
 
-
+# generar dataset con modificaciones
+# No olvidar reajustar sobre enero
+# Predecir sobre marzo modificado
