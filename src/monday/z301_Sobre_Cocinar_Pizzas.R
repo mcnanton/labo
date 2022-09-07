@@ -24,9 +24,9 @@ require("DiceKriging")
 require("mlrMBO")
 
 # Poner la carpeta de la materia de SU computadora local
-setwd("C:/Users/mcnan/Documents/DMEyF")
+setwd("C:/Users/PC/Documents/DMEyF")
 # Poner sus semillas
-semillas <- c(17, 19, 23, 29, 31)
+semillas <- c(100043, 100049, 100153, 100169, 100183)
 
 # Cargamos el dataset
 dataset <- fread("./datasets/competencia1_2022.csv")
@@ -147,12 +147,17 @@ modelo_rpart <- function(train, test, cp =  0, ms = 20, mb = 1, md = 10) {
                     maxdepth = md)
 
     test_prediccion <- predict(modelo, test, type = "prob")
-    roc_pred <-  ROCR::prediction(test_prediccion[, "evento"],
-                    test$clase_binaria,
-                                  label.ordering = c("noevento", "evento"))
-    auc_t <-  ROCR::performance(roc_pred, "auc")
+    
+    ### Reemplazamos métrica AUC x gcia
+    #roc_pred <-  ROCR::prediction(test_prediccion[, "evento"],
+    #                test$clase_binaria,
+    #                              label.ordering = c("noevento", "evento"))
+    #auc_t <-  ROCR::performance(roc_pred, "auc")
 
-    unlist(auc_t@y.values)
+    #unlist(auc_t@y.values)
+    
+    ### Ganancia
+    ganancia(test_prediccion[, "evento"], test$clase_binaria) / 0.3
 }
 
 # Función para tomar un muestra dejando todos los elementos de la clase BAJA+2
@@ -198,27 +203,28 @@ print(t1 - t0)
 print(r2)
 
 ## Preguntas
-## - ¿Por qué sólo se muestrea train? pq no es costoso escoriar sobre test
+## - ¿Por qué sólo se muestrea train? pq no es costoso ESCORIAR sobre test
 
 ## ---------------------------
 ## Step 7: Buscando el mejor modelo con muestras aleatorias LHS
 ## ---------------------------
 
-# Una función auxiliar para los experimentos
+#Una función auxiliar para los experimentos
+
 experimento_rpart <- function(ds, semillas, cp = 0, ms = 20, mb = 1, md = 10) {
-  auc <- c()
+  gan <- c() #antes: auc <- c()
   for (s in semillas) {
     set.seed(s)
     in_training <- caret::createDataPartition(ds$clase_binaria, p = 0.70,
         list = FALSE)
     train  <-  ds[in_training, ]
     test   <-  ds[-in_training, ]
-    train_sample <- tomar_muestra(train)
-    r <- modelo_rpart(train[train_sample,], test, 
+    #train_sample <- tomar_muestra(train) sin muestra
+    r <- modelo_rpart(train, test, #antes: train[train_sample,]
                     cp = cp, ms = ms, mb = mb, md = md)
-    auc <- c(auc, r)
+    gan <- c(gan, r)
   }
-  mean(auc)
+  mean(gan)
 }
 
 # Haremos 25 experimentos aleatorios, armamos las muestras de acuerdo a como
@@ -233,22 +239,25 @@ espacio_busqueda_1[, 1] <- floor(15 * espacio_busqueda_1[, 1]) + 4
 espacio_busqueda_1[, 2] <- floor(200 * espacio_busqueda_1[, 2]) + 2
 
 resultados_random_search <- data.table()
+
 for (e in 1:cantidad_puntos) {
+  
   r <- experimento_rpart(dataset, semillas,
                         ms = espacio_busqueda_1[e, 2],
                         md = espacio_busqueda_1[e, 1])
+  
   resultados_random_search <- rbindlist(list(resultados_random_search,
                   data.table(
                     md = espacio_busqueda_1[e, 1],
                     ms = espacio_busqueda_1[e, 2],
-                    auc = r)
+                    gan = r)
   ))
 }
 
 print(resultados_random_search)
 ggplot(resultados_random_search, aes(x = md, y = ms, color = auc)) +
     scale_color_gradient(low = "blue", high = "red") +
-    geom_point(aes(size = auc))
+    geom_point(aes(size = gan))
 
 
 ## Preguntas
@@ -310,12 +319,12 @@ resultados_maxdepth <- data.table()
 for (v in 4:20) {
     r <- data.table(
       md = v,
-      auc = experimento_rpart(dataset, semillas, md = v)
+      gan = experimento_rpart(dataset, semillas, md = v)
     )
     resultados_maxdepth <- rbindlist(list(resultados_maxdepth, r))
 }
 
-ggplot(resultados_maxdepth, aes(md, auc)) + geom_point()
+ggplot(resultados_maxdepth, aes(md, gan)) + geom_point()
 
 ## ---------------------------
 ## Step 10: Buscando con una Opt. Bayesiana para 1 parámetro
@@ -408,7 +417,8 @@ obj_fun_md_ms <- function(x) {
   experimento_rpart(dataset, semillas
                     , md = x$maxdepth
                     , ms = x$minsplit
-                    , mb = floor(x$minbucket*x$minsplit) #Multiplico ms x valores entre 0 y 1
+                    , mb = x$minbucket
+                    , cp = -1
   )
 }
 
@@ -416,25 +426,23 @@ obj_fun <- makeSingleObjectiveFunction(
   minimize = FALSE,
   fn = obj_fun_md_ms,
   par.set = makeParamSet(
-    makeIntegerParam("maxdepth",  lower = 4L, upper = 20L),
-    makeIntegerParam("minsplit",  lower = 1L, upper = 200L),
-    makeNumericParam("minbucket",  lower = 0, upper = 1) #debe ser menor al min split. 
-    #Podemos pasar nro entre 0 y que multiplique el minsplit
-    #Al setear lower como 0 y upper como 1 va a buscar valores entre 0 y 1
-    # makeNumericParam  para parámetros continuos
+    makeIntegerParam("maxdepth",  lower = 3L, upper = 20L),
+    makeNumericParam("minsplit" , lower=   1,   upper= 5000 ),
+    makeNumericParam("minbucket", lower=   1,   upper= 1000 ),
+    forbidden = quote( minbucket > 0.5*minsplit ) ## minbuket NO PUEDE ser mayor que la mitad de minsplit 
   ),
   # noisy = TRUE,
   has.simple.signature = FALSE
 )
 
 ctrl <- makeMBOControl()
-ctrl <- setMBOControlTermination(ctrl, iters = 30L)
+ctrl <- setMBOControlTermination(ctrl, iters = 100L)
 ctrl <- setMBOControlInfill(
   ctrl,
   crit = makeMBOInfillCritEI(),
-  opt = "focussearch",
+  #opt = "focussearch",
   # sacar parámetro opt.focussearch.points en próximas ejecuciones!!!!!
-  opt.focussearch.points = 20 #Podemos sacarlo
+  #opt.focussearch.points = 20 #Podemos sacarlo
 )
 
 lrn <- makeMBOLearner(ctrl, obj_fun)
@@ -457,3 +465,22 @@ print(run_md_ms)
 #sin sample y cp -1
 #Subir a kaggle
 #poner ganacia en vez de auc
+
+### RESULTADOS: K301_002
+# Recommended parameters:
+#   maxdepth=10; minsplit=1585.051; minbucket=479
+# Objective: y = 19058666.667
+# 
+# Optimization path
+# 12 + 100 entries in total, displaying last 10 (or less):
+#   maxdepth minsplit minbucket        y dob eol error.message exec.time         ei error.model train.time prop.type propose.time        se     mean
+# 103        9 1792.677  474.9161 18669333  91  NA          <NA>     24.58 -22701.667        <NA>       0.17 infill_ei         1.53  93597.51 18851123
+# 104        7 1373.290  474.4385 18725333  92  NA          <NA>     21.15 -30836.806        <NA>       0.14 infill_ei         1.64 346800.22 18550463
+# 105       10 1512.059  473.7001 18884000  93  NA          <NA>     26.19 -21207.128        <NA>       0.37 infill_ei         1.33 179665.34 18739747
+# 106       10 1517.543  491.6839 18752000  94  NA          <NA>     26.42 -30380.067        <NA>       0.15 infill_ei         1.38 238055.45 18703024
+# 107        9 2322.267  478.2723 18885333  95  NA          <NA>     24.30 -20924.490        <NA>       0.41 infill_ei         1.45  35750.89 18897121
+# 108        8 1517.773  474.5723 18884000  96  NA          <NA>     23.53 -22513.481        <NA>       0.45 infill_ei         1.47  68815.18 18874813
+# 109        8 1490.469  453.1400 18440000  97  NA          <NA>     30.78 -15934.290        <NA>       0.21 infill_ei         1.54 273180.20 18562718
+# 110       10 1556.279  477.0433 19052000  98  NA          <NA>     31.29 -19558.869        <NA>       0.27 infill_ei         1.48  46380.55 18887408
+# 111       10 1585.051  478.9056 19058667  99  NA          <NA>     33.51 -20333.001        <NA>       0.27 infill_ei         1.53  26836.73 19067693
+# 112       10 1029.927  480.0643 17234667 100  NA          <NA>     34.72  -6592.537        <NA>       0.36 infill_ei         1.66 439996.12 18275157
