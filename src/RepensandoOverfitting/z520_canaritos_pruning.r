@@ -13,7 +13,7 @@ dataset  <- fread( "./datasets/competencia1_2022.csv")
 #uso esta semilla para los canaritos
 set.seed(102191)
 
-#agrego 30 canaritos
+#agrego 30 canaritos, prof recomienda un 30%
 for( i in 1:30 ) dataset[ , paste0("canarito", i ) :=  runif( nrow(dataset)) ]
 
 dtrain <- dataset[ foto_mes==202101 ]
