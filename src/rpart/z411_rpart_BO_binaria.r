@@ -26,7 +26,7 @@ require("DiceKriging")
 require("mlrMBO")
 
 #aqui deben ir SUS semillas, se usan para  1-Repeated  (5-Fold Cross Validation)
-ksemilla_azar  <- c(102191)
+ksemilla_azar  <- c(100043, 100049, 100153, 100169, 100183)
 
 
 #Defino la  Optimizacion Bayesiana
@@ -132,7 +132,7 @@ ArbolesCrossValidation  <- function( semilla, data, param, qfolds, pagrupa )
                           seq(qfolds), # 1 2 3 4 5
                           MoreArgs= list( data, param), 
                           SIMPLIFY= FALSE,
-                          mc.cores= 5 )   #debe ir 1 si es Windows
+                          mc.cores=1)   #debe ir 1 si es Windows
 
   data[ , fold := NULL ]
 
@@ -157,7 +157,7 @@ EstimarGanancia  <- function( x )
                            ksemilla_azar,
                            MoreArgs= list ( dtrain, param=x, qfolds= xval_folds, pagrupa= "clase_ternaria" ),
                            SIMPLIFY= FALSE,
-                           mc.cores = 5 )  #debe ir 1 si es Windows
+                           mc.cores = 1 )  #debe ir 1 si es Windows
 
 
    ganancia_promedio  <- mean( unlist( vganancias ) )
@@ -173,7 +173,7 @@ EstimarGanancia  <- function( x )
 #------------------------------------------------------------------------------
 #Aqui empieza el programa
 
-setwd( "~/buckets/b1/" )
+setwd("C:/Users/PC/Documents/DMEyF")
 
 #cargo el dataset, aqui debe poner  SU RUTA
 dataset  <- fread("./datasets/competencia1_2022.csv")   #donde entreno
