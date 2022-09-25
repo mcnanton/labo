@@ -20,7 +20,7 @@ require("ggplot2")
 require("lightgbm")
 
 # Poner la carpeta de la materia de SU computadora local
-setwd("/home/aleb/dmeyf2022")
+setwd("C:/Users/PC/Documents/DMEyF")
 # Poner sus semillas
 semillas <- c(17, 19, 23, 29, 31)
 
@@ -34,10 +34,14 @@ clase_binaria <- ifelse(marzo$clase_ternaria == "CONTINUA", 0, 1)
 clase_real <- marzo$clase_ternaria
 marzo$clase_ternaria <- NULL
 
+# Notas Maria: entrena con marzo, clase binaria
+# weight: numeric vector of sample weights. 
+
+#Asi el algoritmo tiene que ver los datos para empezar a trabajar
 dtrain  <- lgb.Dataset(data   = data.matrix(marzo),
                        label  = clase_binaria,
                        # Truco jedi!
-                       weight = ifelse(clase_real == "BAJA+2", 1.0000001, 1.0))
+                       weight = ifelse(clase_real == "BAJA+2", 1.0000001, 1.0)) #peso ficticio para baja+1, queremos que lgbm calcule gcia automaticamente
 
 # Veremos en detalle esta función un poco más adelante
 ganancia_lgbm  <- function(probs, datos) {
@@ -48,7 +52,7 @@ ganancia_lgbm  <- function(probs, datos) {
     setorder(gan, -pred)
     gan[, gan_acum :=  cumsum(gan)]
     return(list("name" = "ganancia",
-                    "value" = gan[, max(gan_acum)] / 0.2,
+                    "value" = gan[, max(gan_acum)] / 0.2, #Porque estoy usando el CROSS VALIDATION
                     "higher_better" = TRUE))
 }
 
@@ -95,14 +99,14 @@ model_lgbm_cv <- lgb.cv(
         # Hace que las variables pesen menos en memoria
         # Hace más rápido en su ejecución
         # Hace más robusto la predicción
-        max_bin = 31,
+        max_bin = 31, #31 es el max de bins que pueden setearse
 
         # Por default puede trabajar con missing. Pero siempre hay un alumno talibán.
         use_missing = TRUE,
 
         # Variables de crecimiento del árbol.
         max_depth = 12, # -1 = No limitar
-        min_data_in_leaf = 4000,
+        min_data_in_leaf = 4000, #min_bucket rpart
         feature_pre_filter = FALSE, #feature_pre_filter: Evita que LightGBM deje de lado variables que considera malas.
         num_leaves = 100,
 
@@ -121,7 +125,7 @@ model_lgbm_cv <- lgb.cv(
         learning_rate =  0.01,
 
         # Cuántos árboles vamos a generar
-        num_iterations = 100, # Debe ser un número muy grande, recordar el double descent!!!.
+        num_iterations = 100, # Debe ser un número muy grande, recordar el double descent!!!. Entre 200 y 500.
         early_stopping_rounds = 100 # Corta cuando después de tantos árboles no vio una ganancia mejor a la máxima.
     ),
     verbose = -1
