@@ -1,4 +1,5 @@
-##
+##Parametrizar feature_fraction
+
 ## Sobre más features
 ##
 ## ---------------------------
@@ -19,12 +20,12 @@ require("lightgbm")
 require("xgboost")
 
 # Poner la carpeta de la materia de SU computadora local
-setwd("/home/aleb/dmeyf2022")
+setwd("C:/Users/mcnan/Documents/DMEyF")
 # Poner sus semillas
 semillas <- c(17, 19, 23, 29, 31)
 
 # Cargamos los datasets y nos quedamos solo con 202101 y 202103
-dataset <- fread("./datasets/competencia2_2022.csv.gz")
+dataset <- fread("./datasets/competencia2_2022.csv")
 marzo <- dataset[foto_mes == 202103]
 mayo <- dataset[foto_mes == 202105]
 rm(dataset)
@@ -58,6 +59,7 @@ xgb_model <- xgb.train(params = param_fe, data = dtrain, nrounds = nrounds)
 
 # https://research.facebook.com/publications/practical-lessons-from-predicting-clicks-on-ads-at-facebook/
 
+#Esta funcion no la tiene lgbm
 new_features <- xgb.create.features(model = xgb_model, data.matrix(marzo))
 colnames(new_features)[150:173]
 
