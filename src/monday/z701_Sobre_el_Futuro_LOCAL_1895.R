@@ -118,15 +118,8 @@ for (s in seq(f, t, m)) {
                         ))
 }
 # Graficamos
-<<<<<<< HEAD
 a <- ggplot(leaderboad, aes(x = envio, y = valor, color = board)) + geom_line()
 a
-=======
-ggplot(leaderboad[board == "publico"], aes(x = envio, y = valor, color = board)) + geom_line()
-
-ggplot(leaderboad, aes(x = envio, y = valor, color = board)) + geom_line()
-
->>>>>>> upstream/main
 ## ACTIVE LEARNING: Juegue con los parámetros y busque si hay alguna información
 ## en el leaderboard público que le de una estrategia para elegir la cantidad
 ## adecuada para ganar maximizar la ganancia del privado.

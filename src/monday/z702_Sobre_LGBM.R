@@ -33,6 +33,8 @@ rm(dataset)
 clase_binaria <- ifelse(marzo$clase_ternaria == "CONTINUA", 0, 1)
 clase_real <- marzo$clase_ternaria
 marzo$clase_ternaria <- NULL
+#Podemos poner NULL a la mejor variable ctrx_quarter, volver a correr y ver como da
+#El modelo no se inmuta, pq la info que tiene esa variable la tienen las otras
 
 # Notas Maria: entrena con marzo, clase binaria
 # weight: numeric vector of sample weights. 
@@ -41,9 +43,11 @@ marzo$clase_ternaria <- NULL
 dtrain  <- lgb.Dataset(data   = data.matrix(marzo),
                        label  = clase_binaria,
                        # Truco jedi!
-                       weight = ifelse(clase_real == "BAJA+2", 1.0000001, 1.0)) #peso ficticio para baja+1, queremos que lgbm calcule gcia automaticamente
+                       weight = ifelse(clase_real == "BAJA+2", 1.0000001, 1.0)) 
+                        #peso ficticio para baja+1, queremos que lgbm calcule gcia automaticamente
+                        #No sirve para ese algoritmo, me sirve a mi para discriminar ese valor
 
-# Veremos en detalle esta función un poco más adelante
+# Veremos en detalle esta función un poco más adelante. Hs 2:32 clase 19-9
 ganancia_lgbm  <- function(probs, datos) {
     ## Ingresar su estrategia! acá vamos a ir simplemente buscando la máxima gan de la curva.
     gan <- data.table("pred" = probs,
@@ -156,6 +160,8 @@ model_lgm <- lightgbm(
 )
 
 lgb.importance(model_lgm)
+
+#30% gcia lo da ctrx_quarter
 
 ## ACTIVIDAD para la clase: Armar una Opt. Bayesiana para el LightGBM.
 ## Empezaran a recibir cada vez más soporte de código, algo que en la vida de

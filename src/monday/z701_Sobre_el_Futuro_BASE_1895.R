@@ -23,7 +23,7 @@ require("ggplot2")
 require("lightgbm")
 
 # Poner la carpeta de la materia de SU computadora local
-setwd("C:/Users/PC/Documents/DMEyF")
+setwd("/home/aleb/dmeyf2022")
 # Poner sus semillas
 semillas <- c(17, 19, 23, 29, 31)
 
@@ -63,8 +63,8 @@ sum((marzo$pred > 0.025) * ifelse(marzo$clase_ternaria == "BAJA+2", 78000, -2000
 ## Step 4: Veamos cuán distintos los scores entregados
 ## ---------------------------
 
-length(marzo$pred) # 162900
-length(unique(marzo$pred)) #cuantas predicciones distintas me genero el LGBM?  162739 probabilidades
+length(marzo$pred)
+length(unique(marzo$pred))
 
 ## Preguntas
 ## - ¿Qué diferencia observa con respecto a ?
@@ -78,7 +78,7 @@ set.seed(semillas)
 split <- caret::createDataPartition(marzo$clase_ternaria, p = 0.50, list = FALSE)
 
 # Vemos la cantidad de casos que estaríamos mandando:clase_ternaria
-sum(marzo$pred > 0.025) # En mi caso dice que estaría mandando 12334
+sum(marzo$pred > 0.025) # En mi caso dice que estaría mandando 7744
 
 # Y obtendríamos una ganancia de
 # Privado
@@ -99,7 +99,7 @@ setorder(marzo, cols = -pred)
 
 # PROBAR MULTIPLES VALORES
 set.seed(semillas[3])
-m <- 500 #saltos
+m <- 500
 f <- 2000
 t <- 12000
 
@@ -118,15 +118,8 @@ for (s in seq(f, t, m)) {
                         ))
 }
 # Graficamos
-<<<<<<< HEAD
-a <- ggplot(leaderboad, aes(x = envio, y = valor, color = board)) + geom_line()
-a
-=======
-ggplot(leaderboad[board == "publico"], aes(x = envio, y = valor, color = board)) + geom_line()
-
 ggplot(leaderboad, aes(x = envio, y = valor, color = board)) + geom_line()
 
->>>>>>> upstream/main
 ## ACTIVE LEARNING: Juegue con los parámetros y busque si hay alguna información
 ## en el leaderboard público que le de una estrategia para elegir la cantidad
 ## adecuada para ganar maximizar la ganancia del privado.
