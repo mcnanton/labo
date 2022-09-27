@@ -38,6 +38,9 @@ hs <- makeParamSet(
          makeIntegerParam("num_leaves",       lower=   16L   , upper=  1024L),
          makeIntegerParam("envios",           lower= 5000L   , upper= 15000L)
         )
+#Podemos sumar: max_bin (pero 31 es buen numero)
+#bagging_fraction
+#extra_tree
 
 #defino los parametros de la corrida, en una lista, la variable global  PARAM
 #  muy pronto esto se leera desde un archivo formato .yaml
@@ -132,7 +135,7 @@ EstimarGanancia_lightgbm  <- function( x )
                           num_iterations= 9999,   #un numero muy grande, lo limita early_stopping_rounds
                           force_row_wise= TRUE,   #para que los alumnos no se atemoricen con tantos warning
                           seed= PARAM$hyperparametertuning$semilla_azar
-                        )
+                        ) #Si queremos usar regluarizacion, SACARLA Y SUIRLA
 
   #el parametro discolo, que depende de otro
   param_variable  <- list(  early_stopping_rounds= as.integer(50 + 5/x$learning_rate) )
