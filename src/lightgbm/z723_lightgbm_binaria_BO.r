@@ -41,6 +41,8 @@ hs <- makeParamSet(
 #Podemos sumar: max_bin (pero 31 es buen numero)
 #bagging_fraction
 #extra_tree
+#Ya 6 parametros es mucho
+#Probar experimento enero-marzo
 
 #defino los parametros de la corrida, en una lista, la variable global  PARAM
 #  muy pronto esto se leera desde un archivo formato .yaml
@@ -54,7 +56,7 @@ PARAM$input$training      <- c( 202103 )
 PARAM$trainingstrategy$undersampling  <-  1.0   # un undersampling de 0.1  toma solo el 10% de los CONTINUA
 PARAM$trainingstrategy$semilla_azar   <- 100043  #Aqui poner la propia semilla
 
-PARAM$hyperparametertuning$iteraciones <- 100
+PARAM$hyperparametertuning$iteraciones <- 100 #SUBIR, NO MENOS DE 200
 PARAM$hyperparametertuning$xval_folds  <- 5
 PARAM$hyperparametertuning$POS_ganancia  <- 78000
 PARAM$hyperparametertuning$NEG_ganancia  <- -2000
