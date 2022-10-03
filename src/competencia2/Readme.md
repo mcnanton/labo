@@ -20,8 +20,7 @@ Entre otros:
 * El [KaggleHack](https://github.com/dmecoyfin/labo/tree/main/src/KaggleHack) demostraba cómo se distribuían los picos de ganancia, en base a lo cual era recomendable hacer una submission que no bajara de los 9000 envíos. Por no comprender el objetivo del KaggleHack mandé una submission de 6500 envíos.   
 ![](https://i.imgur.com/gB2ouhu.png)
 
-* Dada mi (baja) experiencia en `data.table` y la falta de exploraciones en profundidad del dataset, 20% del tiempo no fue suficiente para generar feature engineering a conciencia para lidiar con el data drift, por lo que terminé descartando toda modificación al dataset que no fuera la base provista por la materia. Esto impactó en la calidad de los envíos generados y va a agravarse en las próximas competencias.
-
+* Dada mi (baja) experiencia en `data.table` y la falta de exploraciones en profundidad del dataset, 20% del tiempo no fue suficiente para generar feature engineering a conciencia para lidiar con el data drift, por lo que terminé descartando toda modificación al dataset que no fuera la base provista por la materia. Esto impactó en la calidad de los envíos generados. La "deuda conceptual" de falta de exploración y manipulación del dataset va a agravarse en las próximas competencias.
 
 *  No hacer chanchadas: como tratar de dejar el learning_rate fijo me daba error, lo sumé como hiper parámetro al espacio de búsqueda de la BO con un rango ínfimo, lo que afectó la performance de la BO. La próxima, preguntar en Zulip.
 
