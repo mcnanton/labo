@@ -2,15 +2,16 @@
 
 ## Enfoque general
 
-Se decidió emplear el 80% del tiempo a mejorar la parametrización del modelo LGBM, y el 20% al feature engineering. En este marco, el objetivo fue crear un lo suficientemente modelo estable que tuviera la menor pérdida de ganancia posible.
+Se decidió emplear el 80% del tiempo a mejorar la parametrización del modelo LGBM, y el 20% al feature engineering. En este marco, el objetivo fue crear un modelo lo suficientemente estable que tuviera la menor pérdida de ganancia posible.
 
 ## Experimentos explorados en esta competencia
 
+Entre otros:
 - Lidiar con el data drifting mediante el dropeo selectivo de variables problemáticas
 - Experimentos con parámetro `extra_trees`
 - Experimentos con parámetro `bagging_fraction`
 - Experimentos con parámetro `feature_fraction`
-- Experimentos con `learning_rate` fijo 
+- Experimentos con `learning_rate` fijo, o de distintos intervalos 
 - Elección de submission final en base a búsqueda de "minimos locales" de ganancia pública
 - Experimentos con distintos números de iteraciones (300-700)
 
