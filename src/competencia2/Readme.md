@@ -2,10 +2,11 @@
 
 ## Enfoque general
 
-Se decidió emplear el 80% del tiempo a mejorar la parametrización del modelo LGBM, y el 20% al feature engineering. En este marco, el objetivo fue crear un lo suficientemente modelo estable que tuviera la menor pérdida de ganancia posible.
+Se decidió emplear el 80% del tiempo a mejorar la parametrización del modelo LGBM, y el 20% al feature engineering. En este marco, el objetivo fue crear un  modelo lo suficientemente estable que tuviera la menor pérdida de ganancia posible.
 
 ## Experimentos explorados en esta competencia
 
+Entre otros: 
 - Lidiar con el data drifting mediante el dropeo selectivo de variables problemáticas
 - Experimentos con parámetro `extra_trees`
 - Experimentos con parámetro `bagging_fraction`
@@ -20,9 +21,6 @@ Se decidió emplear el 80% del tiempo a mejorar la parametrización del modelo L
 ![](https://i.imgur.com/gB2ouhu.png)
 
 * Dada mi (baja) experiencia en `data.table` y la falta de exploraciones en profundidad del dataset, 20% del tiempo no fue suficiente para generar feature engineering a conciencia para lidiar con el data drift, por lo que terminé descartando toda modificación al dataset que no fuera la base provista por la materia. Esto impactó en la calidad de los envíos generados y va a agravarse en las próximas competencias.
-
-
-*  No hacer chanchadas: como tratar de dejar el learning_rate fijo me daba error, lo sumé como hiper parámetro al espacio de búsqueda de la BO con un rango ínfimo, lo que afectó la performance de la BO. La próxima, preguntar en Zulip.
 
 *  (continuará)
 
