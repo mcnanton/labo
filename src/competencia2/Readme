@@ -1,0 +1,8 @@
+# Competencia 2
+
+# Cosas intentadas en esta competencia
+- Lidiar con el data drifting mediante el dropeo selectivo de variables problemáticas
+- Exploración de parámetro 'extra_trees'
+- Exploración de parámetro 'bagging_fraction'
+- Experimentos con 'learning_rate' fijo 
+- Elección de submission final en base a búsqueda de "minimos locales" de ganancia pública
