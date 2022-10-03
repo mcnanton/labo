@@ -6,6 +6,7 @@ Se decidió emplear el 80% del tiempo a mejorar la parametrización del modelo L
 
 ## Experimentos explorados en esta competencia
 
+Entre otros: 
 - Lidiar con el data drifting mediante el dropeo selectivo de variables problemáticas
 - Experimentos con parámetro `extra_trees`
 - Experimentos con parámetro `bagging_fraction`
