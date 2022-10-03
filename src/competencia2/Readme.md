@@ -2,7 +2,7 @@
 
 ## Enfoque general
 
-Se decidió emplear el 80% del tiempo a mejorar la parametrización del modelo LGBM, y el 20% al feature engineering. En este marco, el objetivo fue crear un lo suficientemente modelo estable que tuviera la menor pérdida de ganancia posible.
+Se decidió emplear el 80% del tiempo a mejorar la parametrización del modelo LGBM, y el 20% al feature engineering. En este marco, el objetivo fue crear un  modelo lo suficientemente estable que tuviera la menor pérdida de ganancia posible.
 
 ## Experimentos explorados en esta competencia
 
