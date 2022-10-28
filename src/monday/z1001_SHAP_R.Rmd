@@ -95,7 +95,7 @@ explainer = shap.TreeExplainer(gbm)
 shap_values_Xbajas = explainer.shap_values(r.Xbajas)
 
 ```
-El TreeExplainer de las bajas es un array, ¿con tantos elementos como clases existan?
+El TreeExplainer de las bajas es un array, con tantos elementos como clases existan. Se ve claramente que cada elemento del array contiene los mismos valores, pero con distinto signo.
 
 ```{python}
 shap_values_Xbajas[0]
@@ -117,7 +117,7 @@ shap_bajas
 shap_importancias_bajas = shap_bajas.mean().abs().sort_values(ascending=False)
 shap_importancias_bajas
 ```
-Ploteamos los shap values del modelo aplicado a Xbajas. 
+Ploteamos los shap values del modelo aplicado a Xbajas. El largo de la barra nos dice que tanta influencia la variable tiene en la predicción. Se ve como cada variable esta dividida equitativamente en dos clases, lo cual tiene sentido dado que la contribución a cada clase es la misma (pero negativa o positiva)
 
 ```{python}
 shap.summary_plot(shap_values_Xbajas, r.Xbajas)
@@ -143,12 +143,13 @@ shap_importancias_continuan = shap_continuan.mean().abs().sort_values(ascending=
 shap_importancias_continuan
 
 ```
-En el plot de dependencias vemos que el plot parece sugerir que la probabilidad de clasificar a un cliente como "continua" (0) comienza a aumentar a partir de cliente_edad mayor a 50 años. Esto es semejante a lo que ocurre en las explicaciones para el dataset de bajas.
+
 
 
 ```{python}
 shap.summary_plot(shap_values_Xcontinuan, r.Xcontinuan)
 ```
+En el plot de dependencias vemos que el plot parece sugerir que la probabilidad de clasificar a un cliente como "continua" (0) comienza a aumentar a partir de cliente_edad mayor a 50 años. Esto es semejante a lo que ocurre en las explicaciones para el dataset de bajas.
 
 ```{python}
 shap.dependence_plot("cliente_edad", shap_values_Xcontinuan[0], r.Xcontinuan)
