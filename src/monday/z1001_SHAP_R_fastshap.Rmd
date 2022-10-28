@@ -1,11 +1,12 @@
 ---
 title: "SHAP en R"
-output: html_notebook
+output:
+  html_document:
+    df_print: paged
 ---
 
 ```{r}
 require("data.table")
-require("lightgbm")
 require("reticulate")
 set.seed(123)
 ```
@@ -42,6 +43,7 @@ Xtrain <- Xtrain[, !"clase_ternaria", with = FALSE]
 
 ```{python}
 import lightgbm as lgb
+import pandas as pd
 
 # dtrain  <- lgb.Dataset( data= data.matrix(Xtrain),
 #                           label= ytrain,
