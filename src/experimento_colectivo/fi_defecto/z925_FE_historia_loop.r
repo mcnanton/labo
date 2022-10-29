@@ -1,3 +1,6 @@
+# Este script fue modificado para correr un set específico de ratios de canaritos
+# A fines de funciones internas se procuró no incluir 202105
+
 #Necesita para correr en Google Cloud
 # 256 GB de memoria RAM
 # 256 GB de espacio en el disco local
@@ -19,7 +22,7 @@ require("lightgbm")
 
 #Parametros del script
 PARAM  <- list()
-PARAM$experimento <- "FE9250_fi_ratio1"
+PARAM$experimento <- "FE9250_fi"
 
 PARAM$exp_input  <- "DR9141"
 
@@ -27,7 +30,7 @@ PARAM$lag1  <- TRUE
 PARAM$lag2  <- FALSE
 PARAM$Tendencias  <- TRUE
 PARAM$RandomForest  <- FALSE          #No se puede poner en TRUE para la entrega oficial de la Tercera Competencia
-PARAM$CanaritosAsesinos  <- FALSE
+PARAM$CanaritosAsesinos  <- TRUE
 # FIN Parametros del script
 
 #------------------------------------------------------------------------------
@@ -125,23 +128,23 @@ TendenciaYmuchomas  <- function( dataset, cols, ventana=6, tendencia=TRUE, minim
   gc()
   #Esta es la cantidad de meses que utilizo para la historia
   ventana_regresion  <- ventana
-
+  
   last  <- nrow( dataset )
-
+  
   #creo el vector_desde que indica cada ventana
   #de esta forma se acelera el procesamiento ya que lo hago una sola vez
   vector_ids   <- dataset$numero_de_cliente
-
+  
   vector_desde  <- seq( -ventana_regresion+2,  nrow(dataset)-ventana_regresion+1 )
   vector_desde[ 1:ventana_regresion ]  <-  1
-
+  
   for( i in 2:last )  if( vector_ids[ i-1 ] !=  vector_ids[ i ] ) {  vector_desde[i] <-  i }
   for( i in 2:last )  if( vector_desde[i] < vector_desde[i-1] )  {  vector_desde[i] <-  vector_desde[i-1] }
-
+  
   for(  campo  in   cols )
   {
     nueva_col     <- fhistC( dataset[ , get(campo) ], vector_desde ) 
-
+    
     if(tendencia)  dataset[ , paste0( campo, "_tend", ventana) := nueva_col[ (0*last +1):(1*last) ]  ]
     if(minimo)     dataset[ , paste0( campo, "_min", ventana)  := nueva_col[ (1*last +1):(2*last) ]  ]
     if(maximo)     dataset[ , paste0( campo, "_max", ventana)  := nueva_col[ (2*last +1):(3*last) ]  ]
@@ -149,7 +152,7 @@ TendenciaYmuchomas  <- function( dataset, cols, ventana=6, tendencia=TRUE, minim
     if(ratioavg)   dataset[ , paste0( campo, "_ratioavg", ventana)  := get(campo) /nueva_col[ (3*last +1):(4*last) ]  ]
     if(ratiomax)   dataset[ , paste0( campo, "_ratiomax", ventana)  := get(campo) /nueva_col[ (2*last +1):(3*last) ]  ]
   }
-
+  
 }
 #------------------------------------------------------------------------------
 #agrega al dataset nuevas variables {0,1} que provienen de las hojas de un Random Forest
@@ -158,17 +161,17 @@ AgregaVarRandomForest  <- function( num.trees, max.depth, min.node.size, mtry)
 {
   gc()
   dataset[ , clase01:= ifelse( clase_ternaria=="CONTINUA", 0, 1 ) ]
-
+  
   campos_buenos  <- setdiff( colnames(dataset), c("clase_ternaria" ) )
-
+  
   dataset_rf  <- copy( dataset[ , campos_buenos, with=FALSE] )
   azar  <- runif( nrow(dataset_rf) )
   dataset_rf[ , entrenamiento := as.integer( foto_mes>= 202101 &  foto_mes<= 202103 & ( clase01==1 | azar < 0.10 )) ]
-
+  
   #imputo los nulos, ya que ranger no acepta nulos
   #Leo Breiman, ¿por que le temias a los nulos?
   dataset_rf  <- na.roughfix( dataset_rf )
-
+  
   campos_buenos  <- setdiff( colnames(dataset_rf), c("clase_ternaria","entrenamiento" ) )
   modelo  <- ranger( formula= "clase01 ~ .",
                      data=  dataset_rf[ entrenamiento==1L, campos_buenos, with=FALSE  ] ,
@@ -178,31 +181,31 @@ AgregaVarRandomForest  <- function( num.trees, max.depth, min.node.size, mtry)
                      max.depth=     max.depth,
                      min.node.size= min.node.size,
                      mtry=          mtry
-                   )
-
+  )
+  
   rfhojas  <- predict( object= modelo, 
                        data= dataset_rf[ , campos_buenos, with=FALSE ],
                        predict.all= TRUE,    #entrega la prediccion de cada arbol
                        type= "terminalNodes" #entrega el numero de NODO el arbol
-                     )
-
+  )
+  
   for( arbol in 1:num.trees )
   {
     hojas_arbol  <- unique(  rfhojas$predictions[  , arbol  ] )
-
+    
     for( pos in 1:length(hojas_arbol) )
     {
       nodo_id  <- hojas_arbol[ pos ]  #el numero de nodo de la hoja, estan salteados
       dataset[  ,  paste0( "rf_", sprintf( "%03d", arbol ), "_", sprintf( "%03d", nodo_id ) ) := 0L ]
-
+      
       dataset[ which( rfhojas$predictions[ , arbol] == nodo_id ,  ), 
                paste0( "rf_", sprintf( "%03d", arbol ), "_", sprintf( "%03d", nodo_id ) ) := 1L ]
     }
   }
-
+  
   rm( dataset_rf )
   dataset[ , clase01 := NULL ]
-
+  
   gc()
 }
 #------------------------------------------------------------------------------
@@ -212,19 +215,19 @@ fganancia_lgbm_meseta  <- function(probs, datos)
 {
   vlabels  <- get_field(datos, "label")
   vpesos   <- get_field(datos, "weight")
-
+  
   tbl  <- as.data.table( list( "prob"=probs, "gan"= ifelse( vlabels==1 & vpesos > 1, 78000, -2000 ) ) )
-
+  
   setorder( tbl, -prob )
   tbl[ , posicion := .I ]
   tbl[ , gan_acum :=  cumsum( gan ) ]
   setorder( tbl, -gan_acum )   #voy por la meseta
-
+  
   gan  <- mean( tbl[ 1:500,  gan_acum] )  #meseta de tamaño 500
-
+  
   pos_meseta  <- tbl[ 1:500,  median(posicion)]
   VPOS_CORTE  <<- c( VPOS_CORTE, pos_meseta )
-
+  
   return( list( "name"= "ganancia", 
                 "value"=  gan,
                 "higher_better"= TRUE ) )
@@ -236,31 +239,32 @@ fganancia_lgbm_meseta  <- function(probs, datos)
 
 GVEZ <- 1 
 
-CanaritosAsesinos  <- function( canaritos_ratio=0.2 )
+
+CanaritosAsesinos  <- function( canaritos_ratio)
 {
   gc()
-  dataset[ , clase01:= ifelse( clase_ternaria=="CONTINUA", 0, 1 ) ]
-
-  for( i  in 1:(ncol(dataset)*canaritos_ratio))  dataset[ , paste0("canarito", i ) :=  runif( nrow(dataset))]
-
-  campos_buenos  <- setdiff( colnames(dataset), c("clase_ternaria","clase01", "foto_mes" ) )
-
-  azar  <- runif( nrow(dataset) )
-  dataset[ , entrenamiento := foto_mes>= 202101 &  foto_mes<= 202103  & ( clase01==1 | azar < 0.10 ) ]
-
-  dtrain  <- lgb.Dataset( data=    data.matrix(  dataset[ entrenamiento==TRUE, campos_buenos, with=FALSE]),
-                          label=   dataset[ entrenamiento==TRUE, clase01],
-                          weight=  dataset[ entrenamiento==TRUE, ifelse(clase_ternaria=="BAJA+2", 1.0000001, 1.0)],
+  dataset_precanaritos[ , clase01:= ifelse( clase_ternaria=="CONTINUA", 0, 1 ) ]
+  
+  for( i  in 1:(ncol(dataset_precanaritos)*canaritos_ratio))  dataset_precanaritos[ , paste0("canarito", i ) :=  runif( nrow(dataset_precanaritos))]
+  
+  campos_buenos  <- setdiff( colnames(dataset_precanaritos), c("clase_ternaria","clase01", "foto_mes" ) )
+  
+  azar  <- runif( nrow(dataset_precanaritos) )
+  dataset_precanaritos[ , entrenamiento := foto_mes>= 202012 &  foto_mes<= 202102  & ( clase01==1 | azar < 0.10 ) ]
+  
+  dtrain  <- lgb.Dataset( data=    data.matrix(  dataset_precanaritos[ entrenamiento==TRUE, campos_buenos, with=FALSE]),
+                          label=   dataset_precanaritos[ entrenamiento==TRUE, clase01],
+                          weight=  dataset_precanaritos[ entrenamiento==TRUE, ifelse(clase_ternaria=="BAJA+2", 1.0000001, 1.0)],
                           free_raw_data= FALSE
-                        )
-
-  dvalid  <- lgb.Dataset( data=    data.matrix(  dataset[ foto_mes==202105, campos_buenos, with=FALSE]),
-                          label=   dataset[ foto_mes==202105, clase01],
-                          weight=  dataset[ foto_mes==202105, ifelse(clase_ternaria=="BAJA+2", 1.0000001, 1.0)],
+  )
+  
+  dvalid  <- lgb.Dataset( data=    data.matrix(  dataset_precanaritos[ foto_mes==202104, campos_buenos, with=FALSE]),
+                          label=   dataset_precanaritos[ foto_mes==202104, clase01],
+                          weight=  dataset_precanaritos[ foto_mes==202104, ifelse(clase_ternaria=="BAJA+2", 1.0000001, 1.0)],
                           free_raw_data= FALSE
-                          )
-
-
+  )
+  
+  
   param <- list( objective= "binary",
                  metric= "custom",
                  first_metric_only= TRUE,
@@ -280,30 +284,32 @@ CanaritosAsesinos  <- function( canaritos_ratio=0.2 )
                  min_data_in_leaf= 260,
                  num_leaves= 60,
                  early_stopping_rounds= 200 )
-
+  
   modelo  <- lgb.train( data= dtrain,
                         valids= list( valid= dvalid ),
                         eval= fganancia_lgbm_meseta,
                         param= param,
                         verbose= -100 )
-
+  
   tb_importancia  <- lgb.importance( model= modelo )
   tb_importancia[  , pos := .I ]
-
+  
+  ratio_var <- as.character(canaritos_ratio)
+  ratio_var <- gsub("[^0-9A-Za-z///' ]","" , ratio_var ,ignore.case = TRUE)
   fwrite( tb_importancia, 
-          file= paste0( "impo_", GVEZ ,".txt"),
+          file= paste0( "impo_", GVEZ ,"_ratio_", ratio_var ,".txt"),
           sep= "\t" )
-
+  
   GVEZ  <<- GVEZ + 1
-
+  
   umbral  <- tb_importancia[ Feature %like% "canarito", median(pos) + 2*sd(pos) ]  #Atencion corto en la mediana mas DOS desvios!!
-
+  
   col_utiles  <- tb_importancia[ pos < umbral & !( Feature %like% "canarito"),  Feature ]
   col_utiles  <-  unique( c( col_utiles,  c("numero_de_cliente","foto_mes","clase_ternaria","mes") ) )
-  col_inutiles  <- setdiff( colnames(dataset), col_utiles )
-
-  dataset[  ,  (col_inutiles) := NULL ]
-
+  col_inutiles  <- setdiff( colnames(dataset_precanaritos), col_utiles )
+  
+  dataset_precanaritos[  ,  (col_inutiles) := NULL ]
+  
 }
 #------------------------------------------------------------------------------
 #------------------------------------------------------------------------------
@@ -330,14 +336,15 @@ cols_lagueables  <- copy(  setdiff( colnames(dataset), c("numero_de_cliente", "f
 #  es MUY  importante esta linea
 setorder( dataset, numero_de_cliente, foto_mes )
 
+ratios_exp <- c(02, 0.5, 0.9, 1.2)
 
 if( PARAM$lag1 )
 {
   #creo los campos lags de orden 1
   dataset[ , paste0( cols_lagueables, "_lag1") := shift(.SD, 1, NA, "lag"), 
-             by= numero_de_cliente, 
-             .SDcols= cols_lagueables ]
-
+           by= numero_de_cliente, 
+           .SDcols= cols_lagueables ]
+  
   #agrego los delta lags de orden 1
   for( vcol in cols_lagueables )
   {
@@ -345,14 +352,13 @@ if( PARAM$lag1 )
   }
 }
 
-
 if( PARAM$lag2 )
 {
   #creo los campos lags de orden 2
   dataset[ , paste0( cols_lagueables, "_lag2") := shift(.SD, 2, NA, "lag"), 
-             by= numero_de_cliente, 
-             .SDcols= cols_lagueables ]
-
+           by= numero_de_cliente, 
+           .SDcols= cols_lagueables ]
+  
   #agrego los delta lags de orden 2
   for( vcol in cols_lagueables )
   {
@@ -360,14 +366,12 @@ if( PARAM$lag2 )
   }
 }
 
-
 #--------------------------------------
 #agrego las tendencias
 
 #ordeno el dataset por <numero_de_cliente, foto_mes> para poder hacer lags
 #  es MUY  importante esta linea
 setorder( dataset, numero_de_cliente, foto_mes )
-
 if( PARAM$Tendencias )
 {
   TendenciaYmuchomas( dataset, 
@@ -390,7 +394,7 @@ if( PARAM$RandomForest )
                          max.depth = 5,
                          min.node.size = 500,
                          mtry = 15 )
-
+  
   gc()
 }
 
@@ -398,16 +402,25 @@ if( PARAM$RandomForest )
 #Elimino las variables que no son tan importantes en el dataset
 # with great power comes grest responsability
 
+
 if( PARAM$CanaritosAsesinos )
 {
-  ncol( dataset )
-  CanaritosAsesinos( canaritos_ratio = 0.3 )
-  ncol( dataset )
+  corrida = 1
+  for (i in ratios_exp)
+  {
+    dataset_precanaritos = dataset
+    ncol( dataset_precanaritos )
+    CanaritosAsesinos( canaritos_ratio = i )
+    ncol( dataset_precanaritos )
+    
+    #------------------------------------------------------------------------------
+    #grabo el dataset
+    fwrite( dataset_precanaritos,
+            paste0("dataset_ratio_", corrida , "_" ,".csv.gz"),
+            logical01= TRUE,
+            sep= "," )
+    
+    corrida = corrida + 1
+  }
+  
 }
-
-#------------------------------------------------------------------------------
-#grabo el dataset
-fwrite( dataset,
-        "dataset_ratio_1.csv.gz",
-        logical01= TRUE,
-        sep= "," )
