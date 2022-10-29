@@ -17,9 +17,9 @@ PARAM$experimento  <- "IMP1202"
 #------------------------------------------------------------------------------
 #------------------------------------------------------------------------------
 
-setwd("~/buckets/b1/")
+#setwd("~/buckets/b1/")
 #cargo el dataset
-dataset <- fread( "./datasets/competencia3_2022.csv.gz")
+dataset <- fread( "C:/Users/PC/Documents/DMEyF/datasets/competencia3_2022.csv.gz")
 
 dataset  <- dataset[ foto_mes %in% c(202103, 202105) ]
 gc()
@@ -80,13 +80,15 @@ shap_values  <- shap.values(xgb_model = modelo_final,
 
 
 bias  <-  shap_values$BIAS0[[1]]
-nrow( shap_values$shap_score )
-ncol( shap_values$shap_score )
+nrow( shap_values$shap_score ) #n de registros
+ncol( shap_values$shap_score ) #n de variables
 
 #me fijo en el primer registro
 shap_values$shap_score[ 1, ]
 #calculo el score del primer registros
 primero_score  <- sum(shap_values$shap_score[1, ]) + shap_values$BIAS[[1]]
+# -7.379204
+
 
 #utillizando la funcion logistica, paso de scrore a probabilidad
 primero_prob  <- 1/ ( 1 + exp( - primero_score) )
