@@ -20,9 +20,9 @@ PARAM$exp_input  <- "FE9250_fi"
 
 PARAM$future       <- c( 202105 )
 
-PARAM$final_train  <- c( 202012, 202101, 202102, 202103, 202104)
+PARAM$final_train  <- c(202012, 202101, 202102, 202103, 202104)
 
-PARAM$train$training     <- c(202012, 202101, 202102)
+PARAM$train$training     <- c(202010, 202011, 202012, 202101, 202102)
 PARAM$train$validation   <- c( 202103 )
 PARAM$train$testing      <- c( 202104 )
 PARAM$train$undersampling  <- 1.0   # 1.0 significa NO undersampling ,  0.1  es quedarse con el 10% de los CONTINUA
@@ -46,7 +46,7 @@ setwd( "~/buckets/b1/" )
 
 #cargo el dataset donde voy a entrenar
 #esta en la carpeta del exp_input y siempre se llama  dataset.csv.gz
-dataset_input  <- paste0( "./exp/", PARAM$exp_input, "/dataset_fi_ratio_1_.csv.gz" )
+dataset_input  <- paste0( "./exp/", PARAM$exp_input, "/dataset_ratio_1_.csv.gz" )
 dataset  <- fread( dataset_input )
 
 
@@ -59,13 +59,13 @@ setorder( dataset, foto_mes, numero_de_cliente )
 
 #grabo los datos del futuro
 fwrite( dataset[ foto_mes %in% PARAM$future, ],
-        file= "dataset_future_fi_ratio_1.csv.gz",
+        file= "dataset_future_ratio_1.csv.gz",
         logical01= TRUE,
         sep= "," )
 
 #grabo los datos donde voy a entrenar los Final Models
 fwrite( dataset[ foto_mes %in% PARAM$final_train, ],
-        file= "dataset_train_final_fi_ratio_1.csv.gz",
+        file= "dataset_train_final_ratio_1.csv.gz",
         logical01= TRUE,
         sep= "," )
 
@@ -88,7 +88,7 @@ dataset[ foto_mes %in% PARAM$train$testing, fold_test := 1L ]
 
 
 fwrite( dataset[ fold_train + fold_validate + fold_test >= 1 , ],
-        file= "dataset_training_fi_ratio_1.csv.gz",
+        file= "dataset_training_ratio_1.csv.gz",
         logical01= TRUE,
         sep= "," )
 

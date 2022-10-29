@@ -69,7 +69,7 @@ campos_buenos  <- setdiff( colnames(dataset), c( "clase_ternaria", "clase01") )
 
 for (i in vector_semillas)
   {
-  ganancia_acumulada_semilla <- c()
+  ganancia_promedio_modelo <- c()
 
   #genero un modelo para cada semilla
   for( i in  1:PARAM$modelos )
@@ -178,14 +178,13 @@ for (i in vector_semillas)
     gc()
     
     # Evaluo la predicción de la semilla i
-    
+    ganancia_promedio_semilla <- mean(ganancia_iter)
     
     # Guardo la ganancia de la semilla i junto a las ganancias de las otras semillas
-    
+    ganancia_promedio_modelo <- rbind(ganancia_promedio_modelo, ganancia_promedio_semilla)
     
   }
 }
 
 # Analizo la ganancia promedio de el modelo
 
-print(sum(ganancia_iter)/10)
