@@ -14,9 +14,9 @@ require("data.table")
 
 #Parametros del script
 PARAM  <- list()
-PARAM$experimento <- "TS9310_ec_fi"
+PARAM$experimento <- "TS9310_fi_ratio1"
 
-PARAM$exp_input  <- "FE9250_ec_fi"
+PARAM$exp_input  <- "FE9250_fi"
 
 PARAM$future       <- c( 202105 )
 
@@ -46,7 +46,7 @@ setwd( "~/buckets/b1/" )
 
 #cargo el dataset donde voy a entrenar
 #esta en la carpeta del exp_input y siempre se llama  dataset.csv.gz
-dataset_input  <- paste0( "./exp/", PARAM$exp_input, "/dataset.csv.gz" )
+dataset_input  <- paste0( "./exp/", PARAM$exp_input, "/dataset_fi_ratio_1_.csv.gz" )
 dataset  <- fread( dataset_input )
 
 
@@ -59,13 +59,13 @@ setorder( dataset, foto_mes, numero_de_cliente )
 
 #grabo los datos del futuro
 fwrite( dataset[ foto_mes %in% PARAM$future, ],
-        file= "dataset_future.csv.gz",
+        file= "dataset_future_fi_ratio_1.csv.gz",
         logical01= TRUE,
         sep= "," )
 
 #grabo los datos donde voy a entrenar los Final Models
 fwrite( dataset[ foto_mes %in% PARAM$final_train, ],
-        file= "dataset_train_final.csv.gz",
+        file= "dataset_train_final_fi_ratio_1.csv.gz",
         logical01= TRUE,
         sep= "," )
 
@@ -77,7 +77,7 @@ dataset[ foto_mes %in% PARAM$train$training , azar := runif( nrow(dataset[foto_m
 
 dataset[  , fold_train := 0L ]
 dataset[ foto_mes %in% PARAM$train$training & 
-         ( azar <= PARAM$train$undersampling  | clase_ternaria %in% c( "BAJA+1", "BAJA+2" ) )
+           ( azar <= PARAM$train$undersampling  | clase_ternaria %in% c( "BAJA+1", "BAJA+2" ) )
          , fold_train := 1L ]
 
 dataset[  , fold_validate := 0L ]
@@ -88,7 +88,9 @@ dataset[ foto_mes %in% PARAM$train$testing, fold_test := 1L ]
 
 
 fwrite( dataset[ fold_train + fold_validate + fold_test >= 1 , ],
-        file= "dataset_training.csv.gz",
+        file= "dataset_training_fi_ratio_1.csv.gz",
         logical01= TRUE,
         sep= "," )
+
+
 
