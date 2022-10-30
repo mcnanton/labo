@@ -14,9 +14,9 @@ require("data.table")
 
 #Parametros del script
 PARAM  <- list()
-PARAM$experimento <- "TS9310_fi_ratio1"
+PARAM$experimento <- "TS9310_sh_ratio1"
 
-PARAM$exp_input  <- "FE9250_fi"
+PARAM$exp_input  <- "FE9250_sh_ratio1"
 
 PARAM$future       <- c( 202105 )
 
