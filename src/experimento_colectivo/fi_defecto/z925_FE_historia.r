@@ -255,8 +255,8 @@ CanaritosAsesinos  <- function( canaritos_ratio=0.2 )
                         )
 
   dvalid  <- lgb.Dataset( data=    data.matrix(  dataset[ foto_mes==202105, campos_buenos, with=FALSE]),
-                          label=   dataset[ foto_mes==202105, clase01],
-                          weight=  dataset[ foto_mes==202105, ifelse(clase_ternaria=="BAJA+2", 1.0000001, 1.0)],
+                          label=   dataset[ foto_mes==202104, clase01],
+                          weight=  dataset[ foto_mes==202104, ifelse(clase_ternaria=="BAJA+2", 1.0000001, 1.0)],
                           free_raw_data= FALSE
                           )
 
