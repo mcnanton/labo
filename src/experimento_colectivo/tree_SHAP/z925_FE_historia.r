@@ -347,9 +347,9 @@ CanaritosAsesinos  <- function( canaritos_ratio=0.2 )
 
   GVEZ  <<- GVEZ + 1
 
-  umbral  <- tb_importancia[ Feature %like% "canarito", median(pos) + 2*sd(pos) ]  #Atencion corto en la mediana mas DOS desvios!!
+  umbral  <- tb_importancia[ variable %like% "canarito", median(pos) + 2*sd(pos) ]  #Atencion corto en la mediana mas DOS desvios!!
 
-  col_utiles  <- tb_importancia[ pos < umbral & !( Feature %like% "canarito"),  Feature ]
+  col_utiles  <- tb_importancia[ pos < umbral & !( variable %like% "canarito"),  variable ]
   col_utiles  <-  unique( c( col_utiles,  c("numero_de_cliente","foto_mes","clase_ternaria","mes") ) )
   col_inutiles  <- setdiff( colnames(dataset), col_utiles )
 
