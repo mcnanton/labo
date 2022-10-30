@@ -259,9 +259,9 @@ CanaritosAsesinos  <- function( canaritos_ratio=0.2 )
                           free_raw_data= FALSE
                         )
 
-  dvalid  <- lgb.Dataset( data=    data.matrix(  dataset[ foto_mes==202105, campos_buenos, with=FALSE]),
-                          label=   dataset[ foto_mes==202105, clase01],
-                          weight=  dataset[ foto_mes==202105, ifelse(clase_ternaria=="BAJA+2", 1.0000001, 1.0)],
+  dvalid  <- lgb.Dataset( data=    data.matrix(  dataset[ foto_mes==202104, campos_buenos, with=FALSE]),
+                          label=   dataset[ foto_mes==202104, clase01],
+                          weight=  dataset[ foto_mes==202104, ifelse(clase_ternaria=="BAJA+2", 1.0000001, 1.0)],
                           free_raw_data= FALSE
                           )
 
@@ -294,17 +294,16 @@ CanaritosAsesinos  <- function( canaritos_ratio=0.2 )
   
   predict_contrib <- predict(modelo,
                              data=    data.matrix(  dataset[ entrenamiento==TRUE, campos_buenos, with=FALSE]), #Idem dtrain
-                             #type = "contrib", Esto me devuelve predicciones
-                             predcontrib = TRUE
+                             type = "contrib", 
+                             #predcontrib = TRUE DEPRECADO EN VERSION DE LGBM DE LA VM, no usar
   ) #tengo que cargarle el nombre de las columnas de dataset!
   
-  #t_predict_contrib  <- t(predict_contrib)
-  
+
   dt_contrib  <- data.table(predict_contrib) # n registros x (n var +1)
   
   # Nombres de variables de entrenamiento
   columnas <- colnames(data.matrix(  dataset[ entrenamiento==TRUE, campos_buenos, with=FALSE]))
-  # Les sumo un nombre extra por lo que devuelve predcontrib = TRUE
+  # Les sumo un nombre extra por lo que devuelve type = "contrib"
   columnas <- c(columnas, "global")
   colnames(dt_contrib) <- columnas
   
