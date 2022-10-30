@@ -32,7 +32,7 @@ PARAM$lag1  <- TRUE
 PARAM$lag2  <- FALSE
 PARAM$Tendencias  <- TRUE
 PARAM$RandomForest  <- FALSE          #No se puede poner en TRUE para la entrega oficial de la Tercera Competencia
-PARAM$CanaritosAsesinos  <- FALSE
+PARAM$CanaritosAsesinos  <- TRUE
 # FIN Parametros del script
 
 #------------------------------------------------------------------------------
@@ -453,7 +453,7 @@ if( PARAM$RandomForest )
 if( PARAM$CanaritosAsesinos )
 {
   ncol( dataset )
-  CanaritosAsesinos( canaritos_ratio = 0.3 )
+  CanaritosAsesinos( canaritos_ratio = 0.1 )
   ncol( dataset )
 }
 

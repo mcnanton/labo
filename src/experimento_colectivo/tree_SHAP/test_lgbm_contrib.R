@@ -5,6 +5,32 @@ gc()
 require("data.table")
 require("Matrix")
 require("lightgbm")
+require("dplyr")
+
+#Cargo funciones
+VPOS_CORTE  <- c()
+fganancia_lgbm_meseta  <- function(probs, datos) 
+{
+  vlabels  <- get_field(datos, "label")
+  vpesos   <- get_field(datos, "weight")
+  
+  tbl  <- as.data.table( list( "prob"=probs, "gan"= ifelse( vlabels==1 & vpesos > 1, 78000, -2000 ) ) )
+  
+  setorder( tbl, -prob )
+  tbl[ , posicion := .I ]
+  tbl[ , gan_acum :=  cumsum( gan ) ]
+  setorder( tbl, -gan_acum )   #voy por la meseta
+  
+  gan  <- mean( tbl[ 1:500,  gan_acum] )  #meseta de tamaño 500
+  
+  pos_meseta  <- tbl[ 1:500,  median(posicion)]
+  VPOS_CORTE  <<- c( VPOS_CORTE, pos_meseta )
+  
+  return( list( "name"= "ganancia", 
+                "value"=  gan,
+                "higher_better"= TRUE ) )
+}
+
 
 #cargo el dataset
 dataset <- fread( "C:/Users/PC/Documents/DMEyF/datasets/competencia3_2022.csv.gz")
@@ -61,3 +87,30 @@ modelo  <- lgb.train( data= dtrain,
                       eval= fganancia_lgbm_meseta,
                       param= param,
                       verbose= -100 )
+
+predict_contrib <- predict(modelo,
+                           data=    data.matrix(  dataset[ entrenamiento==TRUE, campos_buenos, with=FALSE]), #Idem dtrain
+                           #type = "contrib", Esto me devuelve predicciones
+                           predcontrib = TRUE
+                           ) #tengo que cargarle el nombre de las columnas de dataset!
+
+#t_predict_contrib  <- t(predict_contrib)
+
+dt_contrib  <- data.table(predict_contrib) # n registros x (n var +1)
+
+# Nombres de variables de entrenamiento
+columnas <- colnames(data.matrix(  dataset[ entrenamiento==TRUE, campos_buenos, with=FALSE]))
+# Les sumo un nombre extra por lo que devuelve predcontrib = TRUE
+columnas <- c(columnas, "global")
+colnames(dt_contrib) <- columnas
+
+dt_contrib_mean <- dt_contrib %>% 
+  select(-global) %>% 
+  dplyr::mutate_all(abs) %>% 
+  dplyr::summarise_all(mean) %>% 
+  as.data.table()
+
+tb_importancia <- transpose(dt_contrib_mean, keep.names = "variable")
+tb_importancia <- tb_importancia[variable != "global",]
+tb_importancia <- tb_importancia[order(-V1), ]
+tb_importancia[  , pos := .I ]

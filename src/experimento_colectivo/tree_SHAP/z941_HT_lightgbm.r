@@ -19,9 +19,9 @@ require("mlrMBO")
 
 #Parametros del script
 PARAM  <- list()
-PARAM$experimento <- "HT9410_fi_ratio1"
+PARAM$experimento <- "HT9410_sh_ratio1"
 
-PARAM$exp_input  <- "TS9310_fi_ratio1"
+PARAM$exp_input  <- "TS9310_sh_ratio1"
 # FIN Parametros del script
 
 
@@ -309,7 +309,7 @@ setwd("~/buckets/b1/")
 
 #cargo el dataset donde voy a entrenar
 #esta en la carpeta del exp_input y siempre se llama  dataset_training.csv.gz
-dataset_input  <- paste0( "./exp/", PARAM$exp_input, "/dataset_training_fi_ratio_1.csv.gz" )
+dataset_input  <- paste0( "./exp/", PARAM$exp_input, "/dataset_training_sh_ratio_1.csv.gz" )
 dataset  <- fread( dataset_input )
 
 #Verificaciones
