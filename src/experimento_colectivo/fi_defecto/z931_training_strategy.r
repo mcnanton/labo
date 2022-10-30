@@ -16,7 +16,7 @@ require("data.table")
 PARAM  <- list()
 PARAM$experimento <- "TS9310_fi_ratio1"
 
-PARAM$exp_input  <- "FE9250_fi"
+PARAM$exp_input  <- "FE9250_fi_ratio1"
 
 PARAM$future       <- c( 202105 )
 
@@ -46,7 +46,7 @@ setwd( "~/buckets/b1/" )
 
 #cargo el dataset donde voy a entrenar
 #esta en la carpeta del exp_input y siempre se llama  dataset.csv.gz
-dataset_input  <- paste0( "./exp/", PARAM$exp_input, "/dataset_ratio_1_.csv.gz" )
+dataset_input  <- paste0( "./exp/", PARAM$exp_input, "/dataset_ratio_1.csv.gz" )
 dataset  <- fread( dataset_input )
 
 

@@ -14,8 +14,8 @@ require("lightgbm")
 
 #Parametros del script
 PARAM  <- list()
-PARAM$experimento  <- "ZZ9410_ec_fi"
-PARAM$exp_input  <- "HT9410_ec_fi"
+PARAM$experimento  <- "ZZ9410_fi_ratio1"
+PARAM$exp_input  <- "HT9410_fi_ratio1"
 PARAM$corte = 9000
 
 PARAM$modelos  <- 1 # No necesito los top n modelos, solo 1
