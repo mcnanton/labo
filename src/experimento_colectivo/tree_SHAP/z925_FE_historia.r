@@ -293,7 +293,7 @@ CanaritosAsesinos  <- function( canaritos_ratio=0.2 )
                         verbose= -100 )
   
   predict_contrib <- predict(modelo,
-                             data=    data.matrix(  dataset[ entrenamiento==TRUE, campos_buenos, with=FALSE]), #Idem dtrain
+                             newdata=    data.matrix(  dataset[ entrenamiento==TRUE, campos_buenos, with=FALSE]), #Idem dtrain
                              type = "contrib" 
                              #predcontrib = TRUE DEPRECADO EN VERSION DE LGBM DE LA VM, no usar
   ) #tengo que cargarle el nombre de las columnas de dataset!
