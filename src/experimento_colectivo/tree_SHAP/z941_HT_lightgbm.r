@@ -309,7 +309,7 @@ setwd("~/buckets/b1/")
 
 #cargo el dataset donde voy a entrenar
 #esta en la carpeta del exp_input y siempre se llama  dataset_training.csv.gz
-dataset_input  <- paste0( "./exp/", PARAM$exp_input, "/dataset_training_sh_ratio_1.csv.gz" )
+dataset_input  <- paste0( "./exp/", PARAM$exp_input, "/dataset_training_ratio_1.csv.gz" )
 dataset  <- fread( dataset_input )
 
 #Verificaciones
